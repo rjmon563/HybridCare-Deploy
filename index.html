@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HybridCare Pro">
+<meta name="description" content="Diagnóstico profesional para vehículos híbridos - OBD2, GPS, Batería, Mantenimiento">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>HybridCare Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #050810;
+  --bg-dark: #0a0f1e;
+  --bg-card: #0d1428;
+  --bg-card2: #111827;
+  --accent-cyan: #00d4ff;
+  --accent-green: #00ff88;
+  --accent-orange: #ff6b35;
+  --accent-yellow: #ffd700;
+  --accent-red: #ff3b3b;
+  --accent-purple: #7c3aed;
+  --text-primary: #e8f4fd;
+  --text-secondary: #8ba3c7;
+  --text-dim: #4a6080;
+  --border: rgba(0, 212, 255, 0.15);
+  --border-glow: rgba(0, 212, 255, 0.4);
+  --glass: rgba(13, 20, 40, 0.85);
+  --radius: 12px;
+  --radius-lg: 20px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Rajdhani', sans-serif;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated background */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background: 
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0,212,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(0,255,136,0.04) 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,212,255,0.015) 50px, rgba(0,212,255,0.015) 51px),
+    repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0,212,255,0.015) 50px, rgba(0,212,255,0.015) 51px);
+  pointer-events:none;
+}
+
+/* ─── LAYOUT ─────────────────────────────────── */
+#app { display:flex; flex-direction:column; height:100vh; position:relative; z-index:1; }
+
+/* ─── HEADER ──────────────────────────────────── */
+header {
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 16px 8px;
+  background: linear-gradient(180deg, rgba(5,8,16,0.98) 0%, rgba(10,15,30,0.95) 100%);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-icon {
+  width:38px; height:38px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  box-shadow: 0 0 20px rgba(0,212,255,0.4);
+  animation: logoGlow 3s ease-in-out infinite alternate;
+}
+@keyframes logoGlow {
+  from { box-shadow: 0 0 15px rgba(0,212,255,0.3); }
+  to { box-shadow: 0 0 30px rgba(0,212,255,0.6), 0 0 60px rgba(0,255,136,0.2); }
+}
+.logo-text { font-family:'Orbitron',sans-serif; font-size:14px; font-weight:700; color:var(--accent-cyan); letter-spacing:2px; }
+.logo-sub { font-size:10px; color:var(--text-secondary); font-family:'Share Tech Mono',monospace; letter-spacing:1px; }
+
+.header-right { display:flex; align-items:center; gap:10px; }
+#obd-status {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 10px; border-radius:20px;
+  font-family:'Share Tech Mono',monospace; font-size:11px;
+  border: 1px solid;
+  cursor:pointer; transition: all 0.3s;
+}
+#obd-status.disconnected { color:var(--text-dim); border-color:var(--text-dim); background:rgba(74,96,128,0.1); }
+#obd-status.connecting { color:var(--accent-yellow); border-color:var(--accent-yellow); background:rgba(255,215,0,0.08); animation: pulse 1s infinite; }
+#obd-status.connected { color:var(--accent-green); border-color:var(--accent-green); background:rgba(0,255,136,0.08); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.status-dot { width:7px; height:7px; border-radius:50%; background:currentColor; }
+.status-dot.animated { animation: pulse 1s infinite; }
+
+#notif-btn {
+  width:34px; height:34px; border-radius:8px;
+  border:1px solid var(--border); background:rgba(0,212,255,0.05);
+  color:var(--text-secondary); font-size:16px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  position:relative; transition:all 0.3s;
+}
+#notif-btn:hover { border-color:var(--accent-cyan); color:var(--accent-cyan); }
+.notif-badge {
+  position:absolute; top:-3px; right:-3px;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--accent-red); font-size:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:bold; color:#fff;
+}
+
+/* ─── TOP QUICK STATS ─────────────────────────── */
+#quick-stats {
+  flex-shrink:0;
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:8px; padding:8px 16px;
+  background: rgba(10,15,30,0.6);
+}
+.qs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius:var(--radius);
+  padding:8px 6px;
+  text-align:center;
+  position:relative; overflow:hidden;
+  transition: border-color 0.3s;
+}
+.qs-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--c,var(--accent-cyan)), transparent);
+}
+.qs-card.green { --c: var(--accent-green); }
+.qs-card.orange { --c: var(--accent-orange); }
+.qs-card.yellow { --c: var(--accent-yellow); }
+.qs-value { font-family:'Orbitron',sans-serif; font-size:15px; font-weight:700; color:var(--c,var(--accent-cyan)); }
+.qs-label { font-size:9px; color:var(--text-secondary); letter-spacing:0.5px; margin-top:2px; text-transform:uppercase; }
+
+/* ─── MAIN CONTENT ─────────────────────────────── */
+#main { flex:1; overflow-y:auto; overflow-x:hidden; padding:0 0 70px; }
+#main::-webkit-scrollbar { width:3px; }
+#main::-webkit-scrollbar-track { background:transparent; }
+#main::-webkit-scrollbar-thumb { background:var(--accent-cyan); opacity:0.3; border-radius:3px; }
+
+/* ─── TABS ─────────────────────────────────────── */
+.tab-panel { display:none; padding:12px 16px; animation: fadeIn 0.3s ease; }
+.tab-panel.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ─── BOTTOM NAV ────────────────────────────────── */
+nav {
+  flex-shrink:0;
+  display:flex;
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  background: linear-gradient(0deg, rgba(5,8,16,0.98) 0%, rgba(10,15,30,0.95) 100%);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.nav-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:10px 4px;
+  background:none; border:none; cursor:pointer;
+  color:var(--text-dim); font-family:'Rajdhani',sans-serif;
+  font-size:10px; font-weight:600; letter-spacing:0.5px;
+  text-transform:uppercase; transition: all 0.3s;
+  position:relative;
+}
+.nav-btn.active { color:var(--accent-cyan); }
+.nav-btn.active::before {
+  content:'';
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:30px; height:2px;
+  background: var(--accent-cyan);
+  border-radius:0 0 3px 3px;
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+.nav-icon { font-size:20px; }
+
+/* ─── CARDS ─────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:16px;
+  margin-bottom:12px;
+  position:relative; overflow:hidden;
+}
+.card-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.card-title {
+  font-family:'Orbitron',sans-serif; font-size:11px; font-weight:600;
+  color:var(--accent-cyan); letter-spacing:2px; text-transform:uppercase;
+  display:flex; align-items:center; gap:8px;
+}
+.card-title-icon { font-size:16px; }
+
+/* ─── GAUGE ──────────────────────────────────────── */
+.gauge-container { display:flex; justify-content:center; margin:8px 0 16px; }
+.gauge-wrap { position:relative; width:160px; height:80px; }
+.gauge-svg { width:160px; height:80px; }
+.gauge-bg { fill:none; stroke:rgba(0,212,255,0.1); stroke-width:12; stroke-linecap:round; }
+.gauge-fill { fill:none; stroke-width:12; stroke-linecap:round;
+  transition: stroke-dasharray 1s cubic-bezier(.4,0,.2,1), stroke 0.5s; }
+.gauge-center {
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  text-align:center;
+}
+.gauge-val { font-family:'Orbitron',sans-serif; font-size:28px; font-weight:900; line-height:1; }
+.gauge-unit { font-size:11px; color:var(--text-secondary); letter-spacing:1px; }
+
+/* ─── GRID METRICS ───────────────────────────────── */
+.metrics-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.metric-box {
+  background: rgba(0,212,255,0.03);
+  border: 1px solid var(--border);
+  border-radius:var(--radius);
+  padding:12px;
+  position:relative;
+}
+.metric-box::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--c,var(--accent-cyan)) 50%, transparent);
+  opacity:0.5;
+}
+.metric-box.green { --c:var(--accent-green); }
+.metric-box.orange { --c:var(--accent-orange); }
+.metric-box.yellow { --c:var(--accent-yellow); }
+.metric-label { font-size:10px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.metric-val { font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; color:var(--c,var(--accent-cyan)); }
+.metric-sub { font-size:10px; color:var(--text-dim); margin-top:2px; }
+
+/* ─── PROGRESS BAR ───────────────────────────────── */
+.prog-wrap { margin-bottom:10px; }
+.prog-header { display:flex; justify-content:space-between; margin-bottom:5px; }
+.prog-label { font-size:12px; color:var(--text-secondary); }
+.prog-val { font-size:12px; color:var(--text-primary); font-family:'Share Tech Mono',monospace; }
+.prog-track {
+  height:6px; background:rgba(255,255,255,0.05);
+  border-radius:3px; overflow:hidden;
+}
+.prog-bar {
+  height:100%; border-radius:3px;
+  background: linear-gradient(90deg, var(--c1,var(--accent-cyan)), var(--c2,var(--accent-green)));
+  transition: width 1s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.prog-bar::after {
+  content:'';
+  position:absolute; right:0; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%;
+  background: var(--c2,var(--accent-green));
+  box-shadow: 0 0 8px var(--c2,var(--accent-green));
+}
+
+/* ─── DTC / FAULT CODES ──────────────────────────── */
+.dtc-item {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:12px;
+  background: rgba(255,59,59,0.05);
+  border: 1px solid rgba(255,59,59,0.2);
+  border-radius:var(--radius);
+  margin-bottom:8px;
+  animation: slideIn 0.3s ease;
+}
+.dtc-item.warning {
+  background: rgba(255,215,0,0.05);
+  border-color: rgba(255,215,0,0.2);
+}
+.dtc-item.info {
+  background: rgba(0,212,255,0.05);
+  border-color: rgba(0,212,255,0.15);
+}
+@keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+.dtc-code { font-family:'Orbitron',sans-serif; font-size:12px; font-weight:700; min-width:60px; }
+.dtc-item.error .dtc-code { color:var(--accent-red); }
+.dtc-item.warning .dtc-code { color:var(--accent-yellow); }
+.dtc-item.info .dtc-code { color:var(--accent-cyan); }
+.dtc-desc { font-size:12px; flex:1; }
+.dtc-title { font-weight:600; color:var(--text-primary); margin-bottom:2px; }
+.dtc-detail { color:var(--text-secondary); font-size:11px; }
+
+/* ─── BUTTONS ────────────────────────────────────── */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 18px; border-radius:var(--radius);
+  border:none; cursor:pointer; font-family:'Rajdhani',sans-serif;
+  font-size:14px; font-weight:600; letter-spacing:1px;
+  text-transform:uppercase; transition: all 0.3s;
+  position:relative; overflow:hidden;
+}
+.btn::before {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity:0; transition: opacity 0.3s;
+}
+.btn:hover::before { opacity:1; }
+.btn:active { transform:scale(0.97); }
+.btn-primary { background:linear-gradient(135deg, var(--accent-cyan), #0099bb); color:#050810; }
+.btn-success { background:linear-gradient(135deg, var(--accent-green), #009955); color:#050810; }
+.btn-danger { background:linear-gradient(135deg, var(--accent-red), #cc0000); color:#fff; }
+.btn-ghost {
+  background:transparent; color:var(--accent-cyan);
+  border:1px solid var(--border);
+}
+.btn-ghost:hover { border-color:var(--accent-cyan); background:rgba(0,212,255,0.08); }
+.btn-sm { padding:7px 12px; font-size:12px; }
+.btn-full { width:100%; justify-content:center; }
+.btn-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+/* ─── VOICE ──────────────────────────────────────── */
+#voice-area {
+  text-align:center; padding:16px 0;
+}
+.voice-orb {
+  width:80px; height:80px; border-radius:50%; margin:0 auto 12px;
+  background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, rgba(0,212,255,0.05) 60%, transparent 100%);
+  border: 2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:32px; cursor:pointer; transition: all 0.3s;
+  position:relative;
+}
+.voice-orb.listening {
+  border-color:var(--accent-cyan);
+  box-shadow: 0 0 30px rgba(0,212,255,0.4), 0 0 60px rgba(0,212,255,0.2);
+  animation: voicePulse 1s ease-in-out infinite;
+}
+@keyframes voicePulse {
+  0%,100% { transform:scale(1); box-shadow:0 0 30px rgba(0,212,255,0.4); }
+  50% { transform:scale(1.05); box-shadow:0 0 50px rgba(0,212,255,0.6); }
+}
+.voice-status { font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--text-secondary); }
+.voice-transcript {
+  margin-top:10px; padding:10px;
+  background:rgba(0,212,255,0.05); border-radius:var(--radius);
+  font-size:13px; color:var(--text-primary); min-height:40px;
+  border:1px solid var(--border);
+}
+
+/* ─── TRIP LOG ───────────────────────────────────── */
+.trip-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px;
+  background: rgba(0,212,255,0.03); border:1px solid var(--border);
+  border-radius:var(--radius); margin-bottom:8px;
+}
+.trip-meta { font-size:11px; color:var(--text-secondary); margin-top:2px; font-family:'Share Tech Mono',monospace; }
+.trip-km { font-family:'Orbitron',sans-serif; font-size:16px; color:var(--accent-cyan); font-weight:700; }
+
+/* ─── SETTINGS / INPUT ───────────────────────────── */
+.input-group { margin-bottom:12px; }
+.input-label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; display:block; }
+input[type=text], input[type=number], select {
+  width:100%; padding:10px 12px;
+  background: var(--bg-card2); border: 1px solid var(--border);
+  border-radius:var(--radius); color:var(--text-primary);
+  font-family:'Rajdhani',sans-serif; font-size:14px;
+  outline:none; transition:border-color 0.3s;
+  -webkit-appearance:none;
+}
+input:focus, select:focus { border-color:var(--accent-cyan); box-shadow: 0 0 0 2px rgba(0,212,255,0.1); }
+select { cursor:pointer; }
+option { background:var(--bg-card2); }
+
+/* ─── MAINTENANCE TABLE ──────────────────────────── */
+.maint-item {
+  display:flex; align-items:center; gap:12px;
+  padding:12px;
+  border-radius:var(--radius);
+  margin-bottom:8px;
+  border-left: 3px solid;
+}
+.maint-item.ok { border-color:var(--accent-green); background:rgba(0,255,136,0.04); }
+.maint-item.soon { border-color:var(--accent-yellow); background:rgba(255,215,0,0.04); }
+.maint-item.overdue { border-color:var(--accent-red); background:rgba(255,59,59,0.05); }
+.maint-icon { font-size:22px; }
+.maint-info { flex:1; }
+.maint-name { font-size:14px; font-weight:600; }
+.maint-km { font-size:11px; font-family:'Share Tech Mono',monospace; margin-top:2px; }
+.maint-item.ok .maint-km { color:var(--accent-green); }
+.maint-item.soon .maint-km { color:var(--accent-yellow); }
+.maint-item.overdue .maint-km { color:var(--accent-red); }
+.maint-badge {
+  font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px;
+  text-transform:uppercase; letter-spacing:0.5px;
+}
+.maint-item.ok .maint-badge { background:rgba(0,255,136,0.15); color:var(--accent-green); }
+.maint-item.soon .maint-badge { background:rgba(255,215,0,0.15); color:var(--accent-yellow); }
+.maint-item.overdue .maint-badge { background:rgba(255,59,59,0.15); color:var(--accent-red); }
+
+/* ─── GPS MAP PLACEHOLDER ────────────────────────── */
+#gps-map {
+  width:100%; height:180px; border-radius:var(--radius);
+  background: var(--bg-card2); border:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:8px; position:relative; overflow:hidden;
+}
+#gps-map::before {
+  content:'';
+  position:absolute; inset:0;
+  background: 
+    repeating-linear-gradient(0deg, transparent, transparent 20px, rgba(0,212,255,0.04) 20px, rgba(0,212,255,0.04) 21px),
+    repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(0,212,255,0.04) 20px, rgba(0,212,255,0.04) 21px);
+}
+.gps-pulse {
+  width:16px; height:16px; border-radius:50%;
+  background:var(--accent-cyan);
+  box-shadow: 0 0 20px var(--accent-cyan);
+  animation: gpsPulse 2s infinite;
+}
+@keyframes gpsPulse {
+  0% { box-shadow:0 0 0 0 rgba(0,212,255,0.6); }
+  100% { box-shadow:0 0 0 30px rgba(0,212,255,0); }
+}
+.gps-coords { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--accent-cyan); text-align:center; z-index:1; }
+
+/* ─── MINI CHART ─────────────────────────────────── */
+.mini-chart { width:100%; height:80px; margin-top:8px; position:relative; }
+canvas { width:100%; height:100%; }
+
+/* ─── TOAST ──────────────────────────────────────── */
+#toast-container { position:fixed; top:80px; left:50%; transform:translateX(-50%); z-index:9999; min-width:280px; max-width:90vw; }
+.toast {
+  background: var(--bg-card);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  font-size:13px; font-weight:500;
+  margin-bottom:8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.3s ease;
+  display:flex; align-items:center; gap:10px;
+}
+.toast.success { border-color:var(--accent-green); }
+.toast.error { border-color:var(--accent-red); }
+.toast.warning { border-color:var(--accent-yellow); }
+@keyframes toastIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:none} }
+
+/* ─── MODAL ──────────────────────────────────────── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.8); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
+.modal {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-lg); padding:20px;
+  width:100%; max-width:380px; max-height:80vh; overflow-y:auto;
+}
+.modal h3 { font-family:'Orbitron',sans-serif; font-size:14px; color:var(--accent-cyan); margin-bottom:16px; letter-spacing:1px; }
+.modal-close { float:right; background:none; border:none; color:var(--text-secondary); font-size:20px; cursor:pointer; margin-top:-4px; }
+
+/* ─── PERMISSIONS PANEL ──────────────────────────── */
+.perm-item {
+  display:flex; align-items:center; gap:12px;
+  padding:10px 0; border-bottom:1px solid var(--border);
+}
+.perm-item:last-child { border-bottom:none; }
+.perm-icon { font-size:22px; width:30px; text-align:center; }
+.perm-info { flex:1; }
+.perm-name { font-size:13px; font-weight:600; }
+.perm-desc { font-size:11px; color:var(--text-secondary); }
+.perm-badge {
+  font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700;
+  text-transform:uppercase; white-space:nowrap;
+}
+.perm-badge.granted { background:rgba(0,255,136,0.15); color:var(--accent-green); }
+.perm-badge.denied { background:rgba(255,59,59,0.15); color:var(--accent-red); }
+.perm-badge.pending { background:rgba(255,215,0,0.15); color:var(--accent-yellow); cursor:pointer; }
+
+/* ─── LOADING ────────────────────────────────────── */
+.spinner {
+  width:20px; height:20px; border-radius:50%;
+  border:2px solid rgba(0,212,255,0.2);
+  border-top-color:var(--accent-cyan);
+  animation:spin 0.8s linear infinite;
+  display:inline-block;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── SPLASH ─────────────────────────────────────── */
+#splash {
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg-deep);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px;
+}
+.splash-logo {
+  width:80px; height:80px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+  border-radius:22px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:40px;
+  box-shadow: 0 0 60px rgba(0,212,255,0.5);
+  animation: splashPulse 1.5s ease-in-out infinite alternate;
+}
+@keyframes splashPulse {
+  from { transform:scale(1); box-shadow:0 0 40px rgba(0,212,255,0.4); }
+  to { transform:scale(1.05); box-shadow:0 0 80px rgba(0,212,255,0.7); }
+}
+.splash-title { font-family:'Orbitron',sans-serif; font-size:22px; font-weight:900; color:var(--accent-cyan); letter-spacing:3px; }
+.splash-sub { font-size:12px; color:var(--text-secondary); letter-spacing:2px; font-family:'Share Tech Mono',monospace; }
+.splash-bar { width:200px; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden; margin-top:10px; }
+.splash-progress { height:100%; width:0; background:linear-gradient(90deg,var(--accent-cyan),var(--accent-green)); border-radius:2px; transition:width 0.3s; }
+
+/* ─── SCROLLABLE SECTION ─────────────────────────── */
+.section-tabs {
+  display:flex; gap:6px; margin-bottom:12px;
+  overflow-x:auto; padding-bottom:4px;
+}
+.section-tabs::-webkit-scrollbar { display:none; }
+.stab {
+  flex-shrink:0; padding:6px 14px; border-radius:20px;
+  font-size:12px; font-weight:600; cursor:pointer; letter-spacing:0.5px;
+  border:1px solid var(--border); background:transparent; color:var(--text-secondary);
+  transition:all 0.3s; text-transform:uppercase;
+}
+.stab.active { background:rgba(0,212,255,0.12); border-color:var(--accent-cyan); color:var(--accent-cyan); }
+
+/* ─── SECTION DIVIDER ─────────────────────────── */
+.sdiv {
+  font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:2px;
+  color:var(--text-dim); text-transform:uppercase;
+  display:flex; align-items:center; gap:8px; margin-bottom:10px; margin-top:6px;
+}
+.sdiv::before, .sdiv::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ─── INSTALL BANNER ─────────────────────────────── */
+#install-banner {
+  display:none; margin:0 16px 8px;
+  background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,255,136,0.08));
+  border:1px solid var(--accent-cyan); border-radius:var(--radius);
+  padding:12px; align-items:center; gap:10px;
+}
+#install-banner.visible { display:flex; }
+#install-banner p { flex:1; font-size:12px; color:var(--text-primary); }
+#install-banner strong { color:var(--accent-cyan); display:block; font-family:'Orbitron',sans-serif; font-size:11px; letter-spacing:1px; }
+
+/* ─── BATTERY CELL VIZ ─────────────────────────── */
+.cell-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; margin:10px 0; }
+.cell {
+  height:30px; border-radius:4px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.15);
+  position:relative; overflow:hidden; transition:all 0.5s;
+}
+.cell-fill {
+  position:absolute; bottom:0; left:0; right:0;
+  border-radius:3px; transition:height 1s ease;
+}
+.cell-fill.high { background:linear-gradient(0deg,var(--accent-green),rgba(0,255,136,0.5)); }
+.cell-fill.med { background:linear-gradient(0deg,var(--accent-yellow),rgba(255,215,0,0.5)); }
+.cell-fill.low { background:linear-gradient(0deg,var(--accent-red),rgba(255,59,59,0.5)); }
+
+/* ─── EFFICIENCY RING ────────────────────────────── */
+.ring-chart { display:flex; justify-content:center; margin:10px 0; }
+.ring-svg { width:120px; height:120px; }
+.ring-bg { fill:none; stroke:rgba(0,212,255,0.08); stroke-width:10; }
+.ring-val { fill:none; stroke-width:10; stroke-linecap:round; transition:stroke-dasharray 1.5s ease; }
+
+@media (prefers-color-scheme: light) {
+  /* Keep dark theme regardless */
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">🔋</div>
+  <div class="splash-title">HYBRIDCARE</div>
+  <div class="splash-sub">PRO v4.0 • SISTEMA DE DIAGNÓSTICO</div>
+  <div class="splash-bar"><div class="splash-progress" id="splash-prog"></div></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<!-- PERMISSIONS MODAL -->
+<div class="modal-overlay" id="perm-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('perm-modal')">✕</button>
+    <h3>🔐 Permisos del Sistema</h3>
+    <div id="perm-list"></div>
+    <br>
+    <button class="btn btn-primary btn-full" onclick="requestAllPermissions()">⚡ Activar Todos</button>
+  </div>
+</div>
+
+<!-- OBD CONNECT MODAL -->
+<div class="modal-overlay" id="obd-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('obd-modal')">✕</button>
+    <h3>🔌 Conectar Adaptador OBD2</h3>
+    <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px">Conecta tu adaptador ELM327 vía Bluetooth o WiFi para datos en tiempo real.</p>
+    <div class="input-group">
+      <label class="input-label">Tipo de conexión</label>
+      <select id="obd-type">
+        <option value="bluetooth">Bluetooth (ELM327)</option>
+        <option value="wifi">WiFi (192.168.0.10)</option>
+        <option value="demo">Modo Demo (sin adaptador)</option>
+      </select>
+    </div>
+    <div class="input-group" id="obd-wifi-group" style="display:none">
+      <label class="input-label">IP del adaptador</label>
+      <input type="text" id="obd-ip" value="192.168.0.10" placeholder="192.168.0.10">
+    </div>
+    <div class="btn-grid">
+      <button class="btn btn-ghost" onclick="closeModal('obd-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="connectOBD()">⚡ Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE LOG MODAL -->
+<div class="modal-overlay" id="service-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('service-modal')">✕</button>
+    <h3>🔧 Registrar Servicio</h3>
+    <div class="input-group">
+      <label class="input-label">Tipo de servicio</label>
+      <select id="svc-type">
+        <option>Cambio de aceite</option>
+        <option>Filtro de aire</option>
+        <option>Pastillas de freno</option>
+        <option>Revisión batería HV</option>
+        <option>Otro</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Kilometraje actual</label>
+      <input type="number" id="svc-km" placeholder="ej: 75000">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Coste (€)</label>
+      <input type="number" id="svc-cost" placeholder="ej: 120">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Notas</label>
+      <input type="text" id="svc-notes" placeholder="Observaciones...">
+    </div>
+    <button class="btn btn-success btn-full" onclick="saveService()">💾 Guardar Servicio</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔋</div>
+      <div>
+        <div class="logo-text">HYBRIDCARE</div>
+        <div class="logo-sub">PRO v4.0</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="obd-status" class="disconnected" onclick="openModal('obd-modal')">
+        <div class="status-dot"></div>
+        <span id="obd-status-txt">OBD2</span>
+      </div>
+      <button id="notif-btn" onclick="openModal('perm-modal')" title="Permisos">
+        🔐
+        <span class="notif-badge" id="notif-count">!</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Install Banner -->
+  <div id="install-banner">
+    <span>📲</span>
+    <p><strong>Instalar App</strong>Instala HybridCare Pro para acceso sin conexión</p>
+    <button class="btn btn-primary btn-sm" id="install-btn">Instalar</button>
+  </div>
+
+  <!-- Quick Stats -->
+  <div id="quick-stats">
+    <div class="qs-card">
+      <div class="qs-value" id="qs-soh">--%</div>
+      <div class="qs-label">Batería SOH</div>
+    </div>
+    <div class="qs-card green">
+      <div class="qs-value" id="qs-fuel" style="--c:var(--accent-green)">--%</div>
+      <div class="qs-label">Combustible</div>
+    </div>
+    <div class="qs-card orange">
+      <div class="qs-value" id="qs-speed" style="--c:var(--accent-orange)">--</div>
+      <div class="qs-label">km/h</div>
+    </div>
+    <div class="qs-card yellow">
+      <div class="qs-value" id="qs-temp" style="--c:var(--accent-yellow)">--°</div>
+      <div class="qs-label">Temp Motor</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- ═══ TAB: DASHBOARD ═══ -->
+    <div class="tab-panel active" id="tab-dashboard">
+      
+      <!-- Battery Gauge -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">🔋</span> Batería Híbrida HV</div>
+          <span id="battery-trend" style="font-size:11px;color:var(--text-secondary)">-- W</span>
+        </div>
+        <div class="gauge-container">
+          <div class="gauge-wrap">
+            <svg class="gauge-svg" viewBox="0 0 160 80">
+              <path class="gauge-bg" d="M 20 75 A 60 60 0 0 1 140 75" />
+              <path class="gauge-fill" id="gauge-fill" 
+                d="M 20 75 A 60 60 0 0 1 140 75"
+                stroke="var(--accent-green)"
+                stroke-dasharray="0 188.5"/>
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-val" id="gauge-val" style="color:var(--accent-green)">--</div>
+              <div class="gauge-unit">% SOC</div>
+            </div>
+          </div>
+        </div>
+        <!-- Battery cells visualization -->
+        <div class="cell-grid" id="cell-grid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:14px;color:var(--accent-cyan)" id="batt-v">--V</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Voltaje</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:14px;color:var(--accent-green)" id="batt-a">--A</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Corriente</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:14px;color:var(--accent-yellow)" id="batt-t">--°C</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Temp Bat</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Metrics -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">📊</span> Datos en Vivo</div>
+          <span class="spinner" id="live-spinner" style="display:none"></span>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">RPM Motor</div>
+            <div class="metric-val" id="m-rpm">----</div>
+          </div>
+          <div class="metric-box green">
+            <div class="metric-label">Velocidad</div>
+            <div class="metric-val" id="m-speed">-- km/h</div>
+          </div>
+          <div class="metric-box orange">
+            <div class="metric-label">Temp. Motor</div>
+            <div class="metric-val" id="m-ect">--°C</div>
+          </div>
+          <div class="metric-box yellow">
+            <div class="metric-label">MAF (g/s)</div>
+            <div class="metric-val" id="m-maf">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Presión Adm.</div>
+            <div class="metric-val" id="m-map">-- kPa</div>
+          </div>
+          <div class="metric-box green">
+            <div class="metric-label">Frenado Regen.</div>
+            <div class="metric-val" id="m-regen">-- kW</div>
+          </div>
+        </div>
+        <!-- Mini chart -->
+        <div class="mini-chart">
+          <canvas id="rpm-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Health Systems -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">❤️</span> Salud del Sistema</div>
+          <div id="health-score" style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--accent-green)">--%</div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-header"><span class="prog-label">⚡ Sistema Eléctrico</span><span class="prog-val" id="ph-elec">--%</span></div>
+          <div class="prog-track"><div class="prog-bar" id="pb-elec" style="width:0%;--c1:var(--accent-cyan);--c2:var(--accent-green)"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-header"><span class="prog-label">⚙️ Sistema Mecánico</span><span class="prog-val" id="ph-mec">--%</span></div>
+          <div class="prog-track"><div class="prog-bar" id="pb-mec" style="width:0%;--c1:#6366f1;--c2:var(--accent-cyan)"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-header"><span class="prog-label">🌡️ Sistema Térmico</span><span class="prog-val" id="ph-therm">--%</span></div>
+          <div class="prog-track"><div class="prog-bar" id="pb-therm" style="width:0%;--c1:var(--accent-orange);--c2:var(--accent-yellow)"></div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-header"><span class="prog-label">🔋 Batería HV</span><span class="prog-val" id="ph-batt">--%</span></div>
+          <div class="prog-track"><div class="prog-bar" id="pb-batt" style="width:0%;--c1:var(--accent-green);--c2:#00ff88"></div></div>
+        </div>
+      </div>
+
+      <!-- GPS / Tracking -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">📍</span> GPS & Tracking</div>
+          <button class="btn btn-ghost btn-sm" id="gps-btn" onclick="toggleGPS()">Activar GPS</button>
+        </div>
+        <div id="gps-map">
+          <div class="gps-pulse" id="gps-dot"></div>
+          <div class="gps-coords" id="gps-info">GPS no activo</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent-cyan)" id="gps-speed">-- km/h</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Vel. GPS</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent-green)" id="gps-alt">-- m</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Altitud</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent-yellow)" id="gps-acc">-- m</div>
+            <div style="font-size:10px;color:var(--text-secondary)">Precisión</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice Assistant -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">🎙️</span> Asistente de Voz</div>
+        </div>
+        <div id="voice-area">
+          <div class="voice-orb" id="voice-orb" onclick="toggleVoice()">🎙️</div>
+          <div class="voice-status" id="voice-status">Toca para activar</div>
+          <div class="voice-transcript" id="voice-transcript">Di: "diagnóstico", "estado", "consumo", "mantenimiento"...</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">⚡</span> Acciones Rápidas</div></div>
+        <div class="btn-grid">
+          <button class="btn btn-primary" onclick="scanDTC()">🔍 Escanear DTC</button>
+          <button class="btn btn-success" onclick="startTrip()">🚗 Registrar Viaje</button>
+          <button class="btn btn-ghost" onclick="generateReport()">📄 Generar PDF</button>
+          <button class="btn btn-ghost" onclick="showTab('tab-maint')">🔧 Mantenimiento</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: FALLOS ═══ -->
+    <div class="tab-panel" id="tab-faults">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">🚨</span> Códigos de Fallo DTC</div>
+          <button class="btn btn-primary btn-sm" onclick="scanDTC()">🔍 Escanear</button>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="switchFaultTab(this,'ft-active')">🔴 Activos</button>
+          <button class="stab" onclick="switchFaultTab(this,'ft-history')">📋 Historial</button>
+          <button class="stab" onclick="switchFaultTab(this,'ft-predict')">🔮 Predictivo</button>
+        </div>
+        <div id="ft-active">
+          <div id="dtc-list"><div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Realiza un escaneo para ver códigos DTC</div></div>
+          <button class="btn btn-danger btn-full" onclick="clearDTC()" style="margin-top:8px">🗑️ Borrar Fallos</button>
+        </div>
+        <div id="ft-history" style="display:none">
+          <div id="dtc-history-list"><div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Sin historial de fallos</div></div>
+        </div>
+        <div id="ft-predict" style="display:none">
+          <div id="dtc-predict-list">
+            <div class="dtc-item info">
+              <div class="dtc-code" style="color:var(--accent-cyan)">PRED</div>
+              <div class="dtc-desc">
+                <div class="dtc-title">Análisis Predictivo Activo</div>
+                <div class="dtc-detail">Conecta OBD2 para análisis de desgaste predictivo de componentes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Freeze Frame Data -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">📸</span> Freeze Frame Data</div></div>
+        <div class="metrics-grid">
+          <div class="metric-box"><div class="metric-label">RPM en fallo</div><div class="metric-val" id="ff-rpm">----</div></div>
+          <div class="metric-box green"><div class="metric-label">Velocidad</div><div class="metric-val" id="ff-speed">--</div></div>
+          <div class="metric-box orange"><div class="metric-label">Temp Motor</div><div class="metric-val" id="ff-ect">--°C</div></div>
+          <div class="metric-box yellow"><div class="metric-label">Carga Motor</div><div class="metric-val" id="ff-load">--%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: CONSUMO ═══ -->
+    <div class="tab-panel" id="tab-fuel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">⛽</span> Consumo en Tiempo Real</div>
+        </div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:30px;padding:16px 0">
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--accent-green)" id="fuel-instant">--</div>
+            <div style="font-size:11px;color:var(--text-secondary);letter-spacing:1px">L/100km INST.</div>
+          </div>
+          <div style="width:1px;height:60px;background:var(--border)"></div>
+          <div style="text-align:center">
+            <div style="font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--accent-cyan)" id="fuel-avg">--</div>
+            <div style="font-size:11px;color:var(--text-secondary);letter-spacing:1px">L/100km MEDIO</div>
+          </div>
+        </div>
+        <!-- Efficiency Ring -->
+        <div class="ring-chart">
+          <svg class="ring-svg" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="50"/>
+            <circle class="ring-val" id="eff-ring" cx="60" cy="60" r="50"
+              stroke="var(--accent-green)" stroke-dasharray="0 314"
+              transform="rotate(-90 60 60)"/>
+            <text x="60" y="55" text-anchor="middle" font-family="Orbitron" font-size="18" font-weight="900" fill="var(--accent-green)" id="eff-pct">--%</text>
+            <text x="60" y="70" text-anchor="middle" font-family="Rajdhani" font-size="10" fill="var(--text-secondary)">EFICIENCIA</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Savings -->
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">💰</span> Ahorro vs Convencional</div></div>
+        <div class="metrics-grid">
+          <div class="metric-box green">
+            <div class="metric-label">Ahorro hoy</div>
+            <div class="metric-val" id="sav-today">--€</div>
+            <div class="metric-sub">estimado</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Ahorro total</div>
+            <div class="metric-val" id="sav-total">--€</div>
+            <div class="metric-sub">acumulado</div>
+          </div>
+          <div class="metric-box green">
+            <div class="metric-label">CO₂ evitado</div>
+            <div class="metric-val" id="co2-saved">-- kg</div>
+            <div class="metric-sub">este mes</div>
+          </div>
+          <div class="metric-box orange">
+            <div class="metric-label">Km eléctrico</div>
+            <div class="metric-val" id="ev-ratio">--%</div>
+            <div class="metric-sub">del total</div>
+          </div>
+        </div>
+        <button class="btn btn-success btn-full" onclick="calcSavings()">💰 Calcular Ahorro Acumulado</button>
+      </div>
+
+      <!-- Trip History -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">🗺️</span> Viajes Registrados</div>
+          <button class="btn btn-primary btn-sm" onclick="startTrip()">+ Nuevo</button>
+        </div>
+        <div id="trip-list"><div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Sin viajes registrados</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: MANTENIMIENTO ═══ -->
+    <div class="tab-panel" id="tab-maint">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">🔧</span> Plan de Mantenimiento</div></div>
+        <div class="input-group">
+          <label class="input-label">Kilometraje actual</label>
+          <input type="number" id="km-input" placeholder="ej: 75000" oninput="updateMaintenance()">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Modelo de vehículo</label>
+          <select id="car-model" onchange="updateMaintenance()">
+            <option value="toyota-prius">Toyota Prius</option>
+            <option value="toyota-chr">Toyota C-HR Hybrid</option>
+            <option value="honda-jazz">Honda Jazz Hybrid</option>
+            <option value="lexus-rx">Lexus RX 450h</option>
+            <option value="bmw-x5">BMW X5 xDrive45e</option>
+            <option value="hyundai-ioniq">Hyundai IONIQ Hybrid</option>
+            <option value="generic">Híbrido Genérico</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">📅</span> Próximos Servicios</div></div>
+        <div id="maint-list"><div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Introduce el kilometraje actual</div></div>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="exportMaintPlan()">📄 Exportar Plan</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="card-title-icon">📖</span> Historial de Servicios</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('service-modal')">+ Registrar</button>
+        </div>
+        <div id="service-list"><div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Sin servicios registrados</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: CONFIGURACIÓN ═══ -->
+    <div class="tab-panel" id="tab-config">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">🔐</span> Permisos del Sistema</div></div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Los permisos permiten funciones avanzadas como GPS, Bluetooth y notificaciones.</p>
+        <div id="perm-status-list"></div>
+        <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="requestAllPermissions()">⚡ Solicitar Todos los Permisos</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">🚗</span> Vehículo</div></div>
+        <div class="input-group">
+          <label class="input-label">Matrícula</label>
+          <input type="text" id="cfg-plate" placeholder="1234 ABC" oninput="saveConfig()">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Capacidad batería (kWh)</label>
+          <input type="number" id="cfg-battcap" placeholder="ej: 8.8" oninput="saveConfig()">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Precio combustible (€/L)</label>
+          <input type="number" id="cfg-fuelp" placeholder="ej: 1.72" step="0.01" oninput="saveConfig()">
+        </div>
+        <div class="input-group">
+          <label class="input-label">Consumo coche convencional ref. (L/100km)</label>
+          <input type="number" id="cfg-refcons" placeholder="ej: 7.5" step="0.1" oninput="saveConfig()">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">💾</span> Backup & Datos</div></div>
+        <div class="btn-grid">
+          <button class="btn btn-primary" onclick="exportBackup()">📤 Exportar Backup</button>
+          <button class="btn btn-ghost" onclick="importBackup()">📥 Importar</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:10px">Último backup: <span id="last-backup">Nunca</span></p>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="card-title-icon">ℹ️</span> Acerca de</div></div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7">
+          <div>🔋 HybridCare Pro v4.0</div>
+          <div>📱 Progressive Web App (PWA)</div>
+          <div>⚡ Protocolo OBD2 ELM327</div>
+          <div>📍 GPS nativo del dispositivo</div>
+          <div>🔵 Bluetooth Web API</div>
+          <div style="margin-top:8px;color:var(--text-dim);font-size:11px">© 2025 HybridCare Pro · Todos los derechos reservados</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <nav>
+    <button class="nav-btn active" onclick="showTab('tab-dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-btn" onclick="showTab('tab-faults')"><span class="nav-icon">🚨</span>Fallos</button>
+    <button class="nav-btn" onclick="showTab('tab-fuel')"><span class="nav-icon">⛽</span>Consumo</button>
+    <button class="nav-btn" onclick="showTab('tab-maint')"><span class="nav-icon">🔧</span>Servicio</button>
+    <button class="nav-btn" onclick="showTab('tab-config')"><span class="nav-icon">⚙️</span>Config</button>
+  </nav>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   HYBRIDCARE PRO v4.0 - CORE JAVASCRIPT
+   ═══════════════════════════════════════════════════ */
+
+// ── STATE ──────────────────────────────────────────
+const state = {
+  obd: { connected: false, mode: null, socket: null },
+  gps: { active: false, watchId: null, lat: null, lng: null, alt: null, speed: null, acc: null },
+  voice: { active: false, recognition: null },
+  data: {
+    soc: null, soh: null, voltage: null, current: null, battTemp: null,
+    rpm: null, speed: null, ect: null, maf: null, map: null, fuel: null,
+    regen: null, fuelInst: null, fuelAvg: null
+  },
+  trips: JSON.parse(localStorage.getItem('hcp_trips') || '[]'),
+  services: JSON.parse(localStorage.getItem('hcp_services') || '[]'),
+  dtcHistory: JSON.parse(localStorage.getItem('hcp_dtc_history') || '[]'),
+  config: JSON.parse(localStorage.getItem('hcp_config') || '{}'),
+  perms: {},
+  demoInterval: null,
+  chartData: Array(30).fill(0),
+  tripActive: false,
+  tripStart: null,
+  installPrompt: null
+};
+
+// ── DTC DATABASE ────────────────────────────────────
+const DTC_DB = {
+  'P0A0F': { title: 'Degradación Batería HV', detail: 'Estado de salud de batería por debajo del umbral', severity: 'error' },
+  'P0A80': { title: 'Fallo Sistema Batería HV', detail: 'Fallo en módulo de gestión de batería híbrida', severity: 'error' },
+  'P0A94': { title: 'Fallo DC/DC Converter', detail: 'Convertidor DC/DC fuera de rango operativo', severity: 'warning' },
+  'P3000': { title: 'Sistema Híbrido HV', detail: 'Fallo en sistema de propulsión eléctrica', severity: 'error' },
+  'P0300': { title: 'Fallo de Encendido', detail: 'Fallo de encendido detectado en múltiples cilindros', severity: 'warning' },
+  'P0420': { title: 'Catalizador Ineficiente', detail: 'Eficiencia del catalizador por debajo del umbral banco 1', severity: 'warning' },
+  'B1000': { title: 'ECU Principal OK', detail: 'Unidad de control principal operativa', severity: 'info' },
+  'U0100': { title: 'Pérdida com. ECM', detail: 'Sin comunicación con módulo de control del motor', severity: 'error' }
+};
+
+// ── SPLASH SCREEN ───────────────────────────────────
+window.addEventListener('load', () => {
+  const prog = document.getElementById('splash-prog');
+  let p = 0;
+  const iv = setInterval(() => {
+    p += Math.random() * 15;
+    if (p >= 100) { p = 100; clearInterval(iv); }
+    prog.style.width = p + '%';
+    if (p >= 100) {
+      setTimeout(() => {
+        document.getElementById('splash').style.opacity = '0';
+        document.getElementById('splash').style.transition = 'opacity 0.5s';
+        setTimeout(() => document.getElementById('splash').remove(), 500);
+        initApp();
+      }, 400);
+    }
+  }, 100);
+});
+
+async function initApp() {
+  loadConfig();
+  buildCellGrid();
+  initChart();
+  checkPermissions();
+  setupPWAInstall();
+  renderTrips();
+  renderServices();
+  // Auto-request key permissions
+  setTimeout(checkPermissions, 1000);
+}
+
+// ── TAB NAVIGATION ──────────────────────────────────
+function showTab(tabId) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    const tabs = ['tab-dashboard','tab-faults','tab-fuel','tab-maint','tab-config'];
+    btn.classList.toggle('active', tabs[i] === tabId);
+  });
+  document.getElementById('main').scrollTop = 0;
+}
+
+// ── MODAL ────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// OBD type change
+document.getElementById('obd-type').addEventListener('change', function() {
+  document.getElementById('obd-wifi-group').style.display = this.value === 'wifi' ? 'block' : 'none';
+});
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type='info', duration=3500) {
+  const icons = { info:'ℹ️', success:'✅', error:'❌', warning:'⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, duration);
+  if (navigator.vibrate && type === 'error') navigator.vibrate([100,50,100]);
+  if (navigator.vibrate && type === 'success') navigator.vibrate(80);
+}
+
+// ── OBD2 CONNECTION ─────────────────────────────────
+async function connectOBD() {
+  const mode = document.getElementById('obd-type').value;
+  closeModal('obd-modal');
+  const statusEl = document.getElementById('obd-status');
+  const statusTxt = document.getElementById('obd-status-txt');
+  statusEl.className = 'connecting';
+  document.querySelector('#obd-status .status-dot').className = 'status-dot animated';
+  statusTxt.textContent = 'Conectando...';
+
+  if (mode === 'demo') {
+    await new Promise(r => setTimeout(r, 1500));
+    state.obd.connected = true;
+    state.obd.mode = 'demo';
+    statusEl.className = 'connected';
+    document.querySelector('#obd-status .status-dot').className = 'status-dot';
+    statusTxt.textContent = 'Demo ●';
+    toast('Modo Demo activo — datos simulados en tiempo real', 'success');
+    startDemoData();
+    document.getElementById('live-spinner').style.display = 'block';
+    return;
+  }
+
+  if (mode === 'bluetooth') {
+    if (!navigator.bluetooth) {
+      toast('Web Bluetooth no disponible en este navegador. Usa Chrome/Edge en Android.', 'warning');
+      statusEl.className = 'disconnected';
+      document.querySelector('#obd-status .status-dot').className = 'status-dot';
+      statusTxt.textContent = 'OBD2';
+      return;
+    }
+    try {
+      toast('Buscando dispositivos Bluetooth...', 'info');
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [
+          { namePrefix: 'ELM327' }, { namePrefix: 'OBD' }, { namePrefix: 'OBDII' }
+        ],
+        optionalServices: ['00001101-0000-1000-8000-00805f9b34fb']
+      });
+      state.obd.device = device;
+      state.obd.connected = true;
+      state.obd.mode = 'bluetooth';
+      statusEl.className = 'connected';
+      document.querySelector('#obd-status .status-dot').className = 'status-dot';
+      statusTxt.textContent = device.name || 'BT ●';
+      toast(`Conectado: ${device.name || 'ELM327'}`, 'success');
+      // In real use, connect GATT & send AT commands here
+      startDemoData(); // fallback demo while GATT not implemented
+    } catch(e) {
+      statusEl.className = 'disconnected';
+      document.querySelector('#obd-status .status-dot').className = 'status-dot';
+      statusTxt.textContent = 'OBD2';
+      if (e.name !== 'NotFoundError') toast('Error Bluetooth: ' + e.message, 'error');
+      else toast('Búsqueda cancelada', 'warning');
+    }
+    return;
+  }
+
+  if (mode === 'wifi') {
+    toast('OBD2 WiFi: conecta tu móvil a la red del adaptador y reinicia la app', 'warning');
+    statusEl.className = 'disconnected';
+    document.querySelector('#obd-status .status-dot').className = 'status-dot';
+    statusTxt.textContent = 'OBD2';
+  }
+}
+
+// ── DEMO DATA SIMULATION ─────────────────────────────
+function startDemoData() {
+  let tick = 0;
+  state.demoInterval = setInterval(() => {
+    tick++;
+    const t = tick * 0.05;
+    // Simulate realistic hybrid data
+    const soc = 65 + Math.sin(t * 0.3) * 20 + Math.random() * 3;
+    const rpm = state.tripActive ? 1200 + Math.sin(t) * 800 + Math.random() * 200 : 0;
+    const speed = state.tripActive ? 60 + Math.sin(t * 0.5) * 40 + Math.random() * 5 : 0;
+    const ect = 82 + Math.sin(t * 0.1) * 8 + Math.random() * 2;
+    const battTemp = 28 + Math.sin(t * 0.08) * 8;
+    const voltage = 220 + Math.sin(t * 0.2) * 30;
+    const current = (rpm > 0) ? -15 + Math.sin(t * 1.5) * 40 : 2 + Math.random();
+    const fuelInst = (rpm > 0) ? 4.2 + Math.sin(t * 0.7) * 3.5 + Math.random() * 0.5 : 0;
+    const fuelAvg = 4.8 + Math.sin(t * 0.05) * 0.8;
+    const regen = Math.max(0, Math.sin(t * 0.8) * 25);
+    const maf = rpm > 0 ? 8 + Math.sin(t) * 5 : 0;
+    const mapVal = 75 + Math.sin(t * 0.6) * 20;
+    const soh = 91.3 - tick * 0.0001;
+
+    updateDashboard({ soc, soh, rpm, speed, ect, battTemp, voltage, current, fuelInst, fuelAvg, regen, maf, mapVal });
+  }, 800);
+}
+
+function updateDashboard(d) {
+  const clamp = (v,mn,mx) => Math.max(mn, Math.min(mx, v));
+  const fmt = (v, dec=1) => isNaN(v) ? '--' : v.toFixed(dec);
+
+  // Quick stats
+  document.getElementById('qs-soh').textContent = fmt(d.soh, 1) + '%';
+  document.getElementById('qs-fuel').textContent = '--'; // fuel level separate
+  document.getElementById('qs-speed').textContent = Math.round(d.speed);
+  document.getElementById('qs-temp').textContent = Math.round(d.ect) + '°';
+
+  // Gauge
+  const soc = clamp(d.soc, 0, 100);
+  const dashLen = 188.5;
+  document.getElementById('gauge-fill').setAttribute('stroke-dasharray', `${soc/100*dashLen} ${dashLen}`);
+  document.getElementById('gauge-fill').setAttribute('stroke', soc > 60 ? 'var(--accent-green)' : soc > 30 ? 'var(--accent-yellow)' : 'var(--accent-red)');
+  document.getElementById('gauge-val').textContent = Math.round(soc);
+  document.getElementById('gauge-val').style.color = soc > 60 ? 'var(--accent-green)' : soc > 30 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+  document.getElementById('battery-trend').textContent = (d.current > 0 ? '+' : '') + fmt(d.voltage * d.current / 1000, 1) + ' kW';
+
+  // Battery cells
+  updateCells(soc);
+
+  // Battery values
+  document.getElementById('batt-v').textContent = Math.round(d.voltage) + 'V';
+  document.getElementById('batt-a').textContent = fmt(d.current, 1) + 'A';
+  document.getElementById('batt-t').textContent = Math.round(d.battTemp) + '°C';
+
+  // Live metrics
+  document.getElementById('m-rpm').textContent = Math.round(d.rpm) || '0';
+  document.getElementById('m-speed').textContent = Math.round(d.speed) + ' km/h';
+  document.getElementById('m-ect').textContent = Math.round(d.ect) + '°C';
+  document.getElementById('m-maf').textContent = fmt(d.maf);
+  document.getElementById('m-map').textContent = Math.round(d.mapVal) + ' kPa';
+  document.getElementById('m-regen').textContent = fmt(d.regen, 1) + ' kW';
+
+  // Health
+  const elec = clamp(80 + (d.soh - 90) * 5, 0, 100);
+  const mec = clamp(85 + Math.sin(Date.now() * 0.0001) * 5, 0, 100);
+  const therm = clamp(100 - Math.max(0, d.ect - 95) * 3, 0, 100);
+  const battH = clamp(d.soh, 0, 100);
+  const overall = (elec + mec + therm + battH) / 4;
+  setHealth('elec', elec); setHealth('mec', mec); setHealth('therm', therm); setHealth('batt', battH);
+  document.getElementById('health-score').textContent = Math.round(overall) + '%';
+  document.getElementById('health-score').style.color = overall > 80 ? 'var(--accent-green)' : overall > 60 ? 'var(--accent-yellow)' : 'var(--accent-red)';
+
+  // Fuel
+  document.getElementById('fuel-instant').textContent = d.rpm > 0 ? fmt(d.fuelInst) : '0.0';
+  document.getElementById('fuel-avg').textContent = fmt(d.fuelAvg);
+  const eff = clamp(100 - (d.fuelAvg / 12 * 100), 0, 100);
+  const circ = 314;
+  document.getElementById('eff-ring').setAttribute('stroke-dasharray', `${eff/100*circ} ${circ}`);
+  document.getElementById('eff-pct').textContent = Math.round(eff) + '%';
+
+  // Savings estimate
+  const cfg = state.config;
+  const fuelP = parseFloat(cfg.fuelPrice || 1.72);
+  const refCons = parseFloat(cfg.refCons || 7.5);
+  const savedL = (refCons - d.fuelAvg) / 100;
+  document.getElementById('sav-today').textContent = (savedL * 100 * fuelP).toFixed(2) + '€';
+  document.getElementById('ev-ratio').textContent = Math.round(clamp((1 - d.fuelInst / 8) * 100, 0, 100)) + '%';
+
+  // Chart
+  state.chartData.push(d.rpm > 0 ? d.rpm / 40 : 0);
+  state.chartData.shift();
+  drawChart();
+}
+
+function setHealth(key, val) {
+  const v = val.toFixed(1);
+  document.getElementById(`ph-${key}`).textContent = v + '%';
+  document.getElementById(`pb-${key}`).style.width = val + '%';
+}
+
+// ── CELL GRID ─────────────────────────────────────────
+function buildCellGrid() {
+  const grid = document.getElementById('cell-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 12; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.innerHTML = `<div class="cell-fill high" id="cell-${i}" style="height:80%"></div>`;
+    grid.appendChild(c);
+  }
+}
+function updateCells(soc) {
+  for (let i = 0; i < 12; i++) {
+    const cellSoc = clamp(soc + (Math.random() - 0.5) * 5, 0, 100);
+    const fill = document.getElementById(`cell-${i}`);
+    if (fill) {
+      fill.style.height = cellSoc + '%';
+      fill.className = 'cell-fill ' + (cellSoc > 60 ? 'high' : cellSoc > 30 ? 'med' : 'low');
+    }
+  }
+}
+const clamp = (v,mn,mx) => Math.max(mn, Math.min(mx, v));
+
+// ── MINI CHART ─────────────────────────────────────────
+function initChart() {
+  const canvas = document.getElementById('rpm-chart');
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = canvas.offsetHeight * devicePixelRatio;
+}
+function drawChart() {
+  const canvas = document.getElementById('rpm-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  
+  const data = state.chartData;
+  const max = Math.max(...data, 1);
+  const step = w / (data.length - 1);
+  
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, 'rgba(0,212,255,0.3)');
+  grad.addColorStop(1, 'rgba(0,212,255,0)');
+  
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = i * step, y = h - (v / max * h * 0.85) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = i * step, y = h - (v / max * h * 0.85) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = 'rgba(0,212,255,0.8)'; ctx.lineWidth = 1.5 * devicePixelRatio;
+  ctx.stroke();
+}
+
+// ── GPS ────────────────────────────────────────────────
+let gpsActive = false;
+async function toggleGPS() {
+  if (gpsActive) {
+    if (state.gps.watchId) navigator.geolocation.clearWatch(state.gps.watchId);
+    gpsActive = false;
+    document.getElementById('gps-btn').textContent = 'Activar GPS';
+    document.getElementById('gps-info').textContent = 'GPS desactivado';
+    document.getElementById('gps-dot').style.background = 'var(--text-dim)';
+    return;
+  }
+  if (!navigator.geolocation) { toast('Geolocalización no disponible', 'error'); return; }
+  toast('Activando GPS...', 'info');
+  state.gps.watchId = navigator.geolocation.watchPosition(
+    pos => {
+      gpsActive = true;
+      document.getElementById('gps-btn').textContent = '🔴 Detener GPS';
+      const { latitude: lat, longitude: lng, altitude: alt, speed: spd, accuracy: acc } = pos.coords;
+      state.gps.lat = lat; state.gps.lng = lng;
+      document.getElementById('gps-info').textContent = `${lat.toFixed(5)}°N ${lng.toFixed(5)}°E`;
+      document.getElementById('gps-speed').textContent = spd ? Math.round(spd * 3.6) + ' km/h' : '0 km/h';
+      document.getElementById('gps-alt').textContent = alt ? Math.round(alt) + ' m' : '-- m';
+      document.getElementById('gps-acc').textContent = Math.round(acc) + ' m';
+      document.getElementById('gps-dot').style.background = 'var(--accent-green)';
+      document.getElementById('gps-dot').style.boxShadow = '0 0 20px var(--accent-green)';
+      document.getElementById('qs-speed').textContent = spd ? Math.round(spd * 3.6) : '--';
+    },
+    err => {
+      const msgs = { 1:'Permiso denegado para GPS', 2:'GPS no disponible', 3:'Tiempo de espera GPS agotado' };
+      toast(msgs[err.code] || 'Error GPS', 'error');
+    },
+    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+  );
+}
+
+// ── VOICE ──────────────────────────────────────────────
+function toggleVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { toast('Reconocimiento de voz no disponible en este navegador', 'warning'); return; }
+  
+  if (state.voice.active) {
+    state.voice.recognition?.stop();
+    state.voice.active = false;
+    document.getElementById('voice-orb').classList.remove('listening');
+    document.getElementById('voice-status').textContent = 'Toca para activar';
+    return;
+  }
+
+  const r = new SpeechRecognition();
+  r.lang = 'es-ES'; r.continuous = false; r.interimResults = true;
+  state.voice.recognition = r;
+
+  r.onstart = () => {
+    state.voice.active = true;
+    document.getElementById('voice-orb').classList.add('listening');
+    document.getElementById('voice-status').textContent = '🎙️ Escuchando...';
+    document.getElementById('voice-transcript').textContent = '';
+    if (navigator.vibrate) navigator.vibrate(50);
+  };
+  r.onresult = e => {
+    let transcript = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      transcript += e.results[i][0].transcript;
+    }
+    document.getElementById('voice-transcript').textContent = transcript;
+    if (e.results[e.resultIndex].isFinal) processVoiceCommand(transcript.toLowerCase());
+  };
+  r.onerror = e => { toast('Error de voz: ' + e.error, 'error'); };
+  r.onend = () => {
+    state.voice.active = false;
+    document.getElementById('voice-orb').classList.remove('listening');
+    document.getElementById('voice-status').textContent = 'Toca para activar';
+  };
+  r.start();
+}
+
+function processVoiceCommand(cmd) {
+  const speak = msg => {
+    const u = new SpeechSynthesisUtterance(msg);
+    u.lang = 'es-ES'; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  };
+
+  if (cmd.includes('diagnóstico') || cmd.includes('escanear')) {
+    toast('Ejecutando diagnóstico por voz...', 'info');
+    scanDTC();
+    speak('Iniciando diagnóstico del vehículo');
+  } else if (cmd.includes('estado') || cmd.includes('batería')) {
+    const soc = document.getElementById('gauge-val').textContent;
+    speak(`Estado de batería: ${soc} por ciento`);
+    toast('🔋 SOC: ' + soc + '%', 'info');
+  } else if (cmd.includes('viaje') || cmd.includes('registrar')) {
+    startTrip();
+    speak('Registrando nuevo viaje');
+  } else if (cmd.includes('informe') || cmd.includes('pdf')) {
+    speak('Generando informe del vehículo');
+    generateReport();
+  } else if (cmd.includes('consumo')) {
+    const avg = document.getElementById('fuel-avg').textContent;
+    speak(`Consumo medio: ${avg} litros por cien kilómetros`);
+  } else if (cmd.includes('conectar') || cmd.includes('obd')) {
+    openModal('obd-modal');
+    speak('Abriendo configuración de OBD2');
+  } else if (cmd.includes('mantenimiento')) {
+    showTab('tab-maint');
+    speak('Mostrando plan de mantenimiento');
+  } else {
+    toast('Comando no reconocido: "' + cmd + '"', 'warning');
+  }
+}
+
+// ── DTC SCAN ─────────────────────────────────────────
+async function scanDTC() {
+  toast('Escaneando códigos de fallo...', 'info');
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+  
+  const listEl = document.getElementById('dtc-list');
+  listEl.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner"></div><p style="margin-top:10px;font-size:12px;color:var(--text-secondary)">Leyendo ECU...</p></div>';
+
+  await new Promise(r => setTimeout(r, 2000));
+
+  // In demo mode, show simulated DTCs
+  const simDTCs = state.obd.connected ? [
+    { code: 'P0A0F', ...DTC_DB['P0A0F'] }
+  ] : [];
+
+  listEl.innerHTML = '';
+  if (simDTCs.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent-green)">✅ Sin códigos de fallo activos</div>';
+    toast('Sin fallos detectados', 'success');
+  } else {
+    simDTCs.forEach(dtc => {
+      const el = document.createElement('div');
+      el.className = `dtc-item ${dtc.severity}`;
+      el.innerHTML = `<div class="dtc-code">${dtc.code}</div>
+        <div class="dtc-desc">
+          <div class="dtc-title">${dtc.title}</div>
+          <div class="dtc-detail">${dtc.detail}</div>
+        </div>`;
+      listEl.appendChild(el);
+    });
+    if (simDTCs.some(d => d.severity === 'error')) {
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+      toast(`${simDTCs.length} código(s) de fallo encontrado(s)`, 'warning');
+    }
+    // Add to history
+    simDTCs.forEach(d => state.dtcHistory.push({ ...d, date: new Date().toLocaleDateString('es') }));
+    localStorage.setItem('hcp_dtc_history', JSON.stringify(state.dtcHistory));
+  }
+
+  // Freeze frame
+  document.getElementById('ff-rpm').textContent = Math.round(800 + Math.random() * 400);
+  document.getElementById('ff-speed').textContent = '0 km/h';
+  document.getElementById('ff-ect').textContent = Math.round(85 + Math.random() * 10) + '°C';
+  document.getElementById('ff-load').textContent = Math.round(20 + Math.random() * 30) + '%';
+}
+
+function clearDTC() {
+  if (!state.obd.connected) { toast('Conecta el OBD2 primero', 'warning'); return; }
+  document.getElementById('dtc-list').innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent-green)">✅ Fallos borrados</div>';
+  toast('Códigos DTC borrados', 'success');
+  if (navigator.vibrate) navigator.vibrate(100);
+}
+
+function switchFaultTab(btn, id) {
+  document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['ft-active','ft-history','ft-predict'].forEach(t => {
+    document.getElementById(t).style.display = t === id ? 'block' : 'none';
+  });
+}
+
+// ── TRIP RECORDING ───────────────────────────────────
+function startTrip() {
+  if (state.tripActive) {
+    // End trip
+    const dur = Math.round((Date.now() - state.tripStart) / 60000);
+    const km = parseFloat(document.getElementById('m-speed').textContent) * dur / 60 || Math.random() * 20 + 5;
+    const trip = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString('es'),
+      time: new Date().toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit'}),
+      km: Math.round(km * 10) / 10,
+      duration: dur,
+      avgConsumption: parseFloat(document.getElementById('fuel-avg').textContent) || 4.9,
+      avgSpeed: Math.round(km / (dur / 60)) || 45
+    };
+    state.trips.unshift(trip);
+    localStorage.setItem('hcp_trips', JSON.stringify(state.trips));
+    state.tripActive = false;
+    state.tripStart = null;
+    renderTrips();
+    toast(`Viaje guardado: ${trip.km} km en ${dur} min`, 'success');
+    document.querySelector('[onclick="startTrip()"]').textContent = '🚗 Registrar Viaje';
+    updateSavings();
+  } else {
+    state.tripActive = true;
+    state.tripStart = Date.now();
+    toast('Viaje iniciado — toca de nuevo para finalizar', 'info');
+    document.querySelector('[onclick="startTrip()"]').textContent = '⏹ Finalizar Viaje';
+    if (navigator.vibrate) navigator.vibrate(80);
+  }
+}
+
+function renderTrips() {
+  const list = document.getElementById('trip-list');
+  if (!state.trips.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Sin viajes registrados</div>';
+    return;
+  }
+  list.innerHTML = state.trips.slice(0, 10).map(t => `
+    <div class="trip-item">
+      <div>
+        <div style="font-size:13px;font-weight:600">${t.date} ${t.time}</div>
+        <div class="trip-meta">${t.duration} min • ${t.avgSpeed} km/h avg • ${t.avgConsumption} L/100km</div>
+      </div>
+      <div class="trip-km">${t.km} km</div>
+    </div>`).join('');
+}
+
+function updateSavings() {
+  const cfg = state.config;
+  const fuelP = parseFloat(cfg.fuelPrice || 1.72);
+  const refCons = parseFloat(cfg.refCons || 7.5);
+  let totalSaved = 0, totalCO2 = 0, totalKm = 0;
+  state.trips.forEach(t => {
+    const savedL = Math.max(0, (refCons - t.avgConsumption) / 100 * t.km);
+    totalSaved += savedL * fuelP;
+    totalCO2 += savedL * 2.31;
+    totalKm += t.km;
+  });
+  document.getElementById('sav-total').textContent = totalSaved.toFixed(2) + '€';
+  document.getElementById('co2-saved').textContent = totalCO2.toFixed(1) + ' kg';
+}
+
+function calcSavings() {
+  updateSavings();
+  toast('Ahorro calculado con ' + state.trips.length + ' viajes', 'success');
+}
+
+// ── MAINTENANCE ──────────────────────────────────────
+const MAINT_ITEMS = [
+  { name: 'Cambio de Aceite Motor', icon: '🛢️', interval: 10000, unit: 'km' },
+  { name: 'Filtro de Aire', icon: '💨', interval: 20000, unit: 'km' },
+  { name: 'Filtro Polen/Cabina', icon: '🌿', interval: 15000, unit: 'km' },
+  { name: 'Pastillas de Freno', icon: '🛑', interval: 40000, unit: 'km' },
+  { name: 'Líquido de Frenos', icon: '🔵', interval: 30000, unit: 'km' },
+  { name: 'Inspección Batería HV', icon: '🔋', interval: 50000, unit: 'km' },
+  { name: 'Refrigerante Motor', icon: '🌡️', interval: 60000, unit: 'km' },
+  { name: 'Neumáticos (rotación)', icon: '🔄', interval: 10000, unit: 'km' },
+  { name: 'Bujías', icon: '⚡', interval: 40000, unit: 'km' },
+  { name: 'Correa Distribución', icon: '⚙️', interval: 120000, unit: 'km' }
+];
+
+function updateMaintenance() {
+  const km = parseInt(document.getElementById('km-input').value);
+  if (!km || km < 0) return;
+  const list = document.getElementById('maint-list');
+  
+  // Get last service km from services
+  const services = {};
+  state.services.forEach(s => {
+    if (!services[s.type] || s.km > services[s.type]) services[s.type] = s.km;
+  });
+
+  const items = MAINT_ITEMS.map(item => {
+    const lastKm = services[item.name] || 0;
+    const nextKm = Math.ceil(lastKm / item.interval) * item.interval + item.interval;
+    const remaining = nextKm - km;
+    const pct = remaining / item.interval;
+    const status = remaining < 0 ? 'overdue' : pct < 0.15 ? 'soon' : 'ok';
+    return { ...item, nextKm, remaining, status };
+  });
+
+  items.sort((a, b) => a.remaining - b.remaining);
+
+  list.innerHTML = items.map(item => `
+    <div class="maint-item ${item.status}">
+      <div class="maint-icon">${item.icon}</div>
+      <div class="maint-info">
+        <div class="maint-name">${item.name}</div>
+        <div class="maint-km">
+          ${item.status === 'overdue' 
+            ? `Vencido hace ${Math.abs(Math.round(item.remaining)).toLocaleString()} km`
+            : `Próximo en ${Math.round(item.remaining).toLocaleString()} km (${item.nextKm.toLocaleString()} km total)`}
+        </div>
+      </div>
+      <div class="maint-badge">${item.status === 'ok' ? 'OK' : item.status === 'soon' ? 'Pronto' : 'Vencido'}</div>
+    </div>`).join('');
+
+  const overdue = items.filter(i => i.status === 'overdue').length;
+  if (overdue > 0) toast(`${overdue} servicio(s) vencido(s) — revisión necesaria`, 'warning');
+  saveConfig();
+}
+
+function exportMaintPlan() {
+  const km = document.getElementById('km-input').value;
+  if (!km) { toast('Introduce el kilometraje primero', 'warning'); return; }
+  const text = ['HYBRIDCARE PRO - PLAN DE MANTENIMIENTO', '===================================', `Kilometraje: ${km} km`, `Fecha: ${new Date().toLocaleDateString('es')}`, '', ...MAINT_ITEMS.map(i => `${i.icon} ${i.name}: cada ${i.interval.toLocaleString()} ${i.unit}`)].join('\n');
+  const blob = new Blob([text], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'mantenimiento-hybridcare.txt';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Plan de mantenimiento exportado', 'success');
+}
+
+// ── SERVICE HISTORY ───────────────────────────────────
+function saveService() {
+  const svc = {
+    id: Date.now(),
+    type: document.getElementById('svc-type').value,
+    km: parseInt(document.getElementById('svc-km').value) || 0,
+    cost: parseFloat(document.getElementById('svc-cost').value) || 0,
+    notes: document.getElementById('svc-notes').value,
+    date: new Date().toLocaleDateString('es')
+  };
+  state.services.unshift(svc);
+  localStorage.setItem('hcp_services', JSON.stringify(state.services));
+  closeModal('service-modal');
+  renderServices();
+  toast(`Servicio registrado: ${svc.type}`, 'success');
+  updateMaintenance();
+}
+
+function renderServices() {
+  const list = document.getElementById('service-list');
+  if (!state.services.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">Sin servicios registrados</div>';
+    return;
+  }
+  list.innerHTML = state.services.slice(0, 8).map(s => `
+    <div class="trip-item">
+      <div>
+        <div style="font-size:13px;font-weight:600">${s.type}</div>
+        <div class="trip-meta">${s.date} • ${s.km.toLocaleString()} km • ${s.notes || 'Sin notas'}</div>
+      </div>
+      <div class="trip-km" style="color:var(--accent-orange);font-size:14px">${s.cost}€</div>
+    </div>`).join('');
+}
+
+// ── PERMISSIONS ────────────────────────────────────────
+const PERMISSIONS = [
+  { key: 'geolocation', name: 'GPS / Ubicación', icon: '📍', desc: 'Para tracking de ruta y velocidad GPS', api: 'geolocation' },
+  { key: 'notifications', name: 'Notificaciones', icon: '🔔', desc: 'Alertas de mantenimiento y fallos', api: 'notifications' },
+  { key: 'bluetooth', name: 'Bluetooth', icon: '🔵', desc: 'Conexión con adaptador OBD2 ELM327', api: 'bluetooth' },
+  { key: 'camera', name: 'Cámara', icon: '📷', desc: 'Escanear VIN con cámara', api: 'camera' },
+  { key: 'vibrate', name: 'Vibración', icon: '📳', desc: 'Alertas hápticas de urgencia', api: 'vibrate' },
+  { key: 'wakelock', name: 'Pantalla activa', icon: '💡', desc: 'Mantener pantalla encendida durante conducción', api: 'wakelock' }
+];
+
+async function checkPermissions() {
+  const statuses = {};
+  for (const perm of PERMISSIONS) {
+    if (perm.key === 'geolocation') {
+      try {
+        const result = await navigator.permissions.query({ name: 'geolocation' });
+        statuses[perm.key] = result.state;
+      } catch { statuses[perm.key] = 'unknown'; }
+    } else if (perm.key === 'notifications') {
+      statuses[perm.key] = Notification.permission;
+    } else if (perm.key === 'bluetooth') {
+      statuses[perm.key] = navigator.bluetooth ? 'available' : 'unavailable';
+    } else if (perm.key === 'vibrate') {
+      statuses[perm.key] = navigator.vibrate ? 'available' : 'unavailable';
+    } else if (perm.key === 'wakelock') {
+      statuses[perm.key] = 'wakeLock' in navigator ? 'available' : 'unavailable';
+    } else if (perm.key === 'camera') {
+      try {
+        const result = await navigator.permissions.query({ name: 'camera' });
+        statuses[perm.key] = result.state;
+      } catch { statuses[perm.key] = 'unknown'; }
+    } else {
+      statuses[perm.key] = 'unknown';
+    }
+  }
+  state.perms = statuses;
+  renderPermissions();
+
+  const granted = Object.values(statuses).filter(s => s === 'granted' || s === 'available').length;
+  const total = PERMISSIONS.length;
+  document.getElementById('notif-count').textContent = (total - granted) > 0 ? (total - granted) : '✓';
+}
+
+function renderPermissions() {
+  const list = document.getElementById('perm-list');
+  const list2 = document.getElementById('perm-status-list');
+  const html = PERMISSIONS.map(p => {
+    const s = state.perms[p.key] || 'unknown';
+    const granted = s === 'granted' || s === 'available';
+    const denied = s === 'denied';
+    const badge = granted ? 'Activo' : denied ? 'Denegado' : 'Solicitar';
+    const bClass = granted ? 'granted' : denied ? 'denied' : 'pending';
+    return `<div class="perm-item">
+      <span class="perm-icon">${p.icon}</span>
+      <div class="perm-info">
+        <div class="perm-name">${p.name}</div>
+        <div class="perm-desc">${p.desc}</div>
+      </div>
+      <span class="perm-badge ${bClass}" onclick="requestPerm('${p.key}')">${badge}</span>
+    </div>`;
+  }).join('');
+  if (list) list.innerHTML = html;
+  if (list2) list2.innerHTML = html;
+}
+
+async function requestPerm(key) {
+  if (key === 'notifications') {
+    const r = await Notification.requestPermission();
+    state.perms[key] = r;
+    if (r === 'granted') {
+      toast('Notificaciones activadas', 'success');
+      new Notification('HybridCare Pro', { body: '✅ Notificaciones configuradas', icon: '/icon-192.png' });
+    } else toast('Notificaciones denegadas', 'warning');
+  } else if (key === 'geolocation') {
+    navigator.geolocation.getCurrentPosition(
+      () => { state.perms[key] = 'granted'; toast('GPS activado', 'success'); renderPermissions(); },
+      () => { state.perms[key] = 'denied'; toast('GPS denegado', 'warning'); renderPermissions(); },
+      { enableHighAccuracy: true }
+    );
+    return;
+  } else if (key === 'camera') {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      state.perms[key] = 'granted';
+      toast('Cámara activada', 'success');
+    } catch { state.perms[key] = 'denied'; toast('Cámara denegada', 'warning'); }
+  } else if (key === 'wakelock') {
+    try {
+      await navigator.wakeLock.request('screen');
+      state.perms[key] = 'granted';
+      toast('Pantalla siempre activa durante conducción', 'success');
+    } catch { toast('Wake Lock no disponible', 'warning'); }
+  } else if (key === 'vibrate') {
+    if (navigator.vibrate) { navigator.vibrate([100,50,100,50,100]); toast('Vibración OK', 'success'); }
+    else toast('Vibración no disponible', 'warning');
+  } else if (key === 'bluetooth') {
+    openModal('obd-modal');
+    return;
+  }
+  renderPermissions();
+}
+
+async function requestAllPermissions() {
+  closeModal('perm-modal');
+  toast('Solicitando permisos...', 'info');
+  for (const p of PERMISSIONS) {
+    await requestPerm(p.key);
+    await new Promise(r => setTimeout(r, 500));
+  }
+  toast('Permisos configurados', 'success');
+}
+
+// ── CONFIG ────────────────────────────────────────────
+function saveConfig() {
+  state.config = {
+    plate: document.getElementById('cfg-plate')?.value || '',
+    battCap: document.getElementById('cfg-battcap')?.value || '',
+    fuelPrice: document.getElementById('cfg-fuelp')?.value || '1.72',
+    refCons: document.getElementById('cfg-refcons')?.value || '7.5',
+    carModel: document.getElementById('car-model')?.value || ''
+  };
+  localStorage.setItem('hcp_config', JSON.stringify(state.config));
+}
+function loadConfig() {
+  const cfg = state.config;
+  if (cfg.plate && document.getElementById('cfg-plate')) document.getElementById('cfg-plate').value = cfg.plate;
+  if (cfg.battCap && document.getElementById('cfg-battcap')) document.getElementById('cfg-battcap').value = cfg.battCap;
+  if (cfg.fuelPrice && document.getElementById('cfg-fuelp')) document.getElementById('cfg-fuelp').value = cfg.fuelPrice;
+  if (cfg.refCons && document.getElementById('cfg-refcons')) document.getElementById('cfg-refcons').value = cfg.refCons;
+}
+
+// ── BACKUP ────────────────────────────────────────────
+function exportBackup() {
+  const data = {
+    version: '4.0', date: new Date().toISOString(),
+    trips: state.trips, services: state.services,
+    dtcHistory: state.dtcHistory, config: state.config
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `hybridcare-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  const now = new Date().toLocaleString('es');
+  localStorage.setItem('hcp_last_backup', now);
+  document.getElementById('last-backup').textContent = now;
+  toast('Backup exportado', 'success');
+}
+
+function importBackup() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.trips) { state.trips = data.trips; localStorage.setItem('hcp_trips', JSON.stringify(data.trips)); }
+        if (data.services) { state.services = data.services; localStorage.setItem('hcp_services', JSON.stringify(data.services)); }
+        if (data.config) { state.config = data.config; localStorage.setItem('hcp_config', JSON.stringify(data.config)); }
+        renderTrips(); renderServices(); loadConfig();
+        toast('Backup restaurado correctamente', 'success');
+      } catch { toast('Archivo de backup inválido', 'error'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// ── REPORT ────────────────────────────────────────────
+function generateReport() {
+  const soc = document.getElementById('gauge-val').textContent;
+  const health = document.getElementById('health-score').textContent;
+  const fuelAvg = document.getElementById('fuel-avg').textContent;
+  const report = [
+    'HYBRIDCARE PRO v4.0 - INFORME DE VEHÍCULO',
+    '==========================================',
+    `Fecha: ${new Date().toLocaleString('es')}`,
+    `Matrícula: ${state.config.plate || 'No configurada'}`,
+    `Modelo: ${document.getElementById('car-model')?.value || 'No configurado'}`,
+    '',
+    'ESTADO DE LA BATERÍA',
+    `  SOC (Carga): ${soc}%`,
+    `  SOH (Salud): ${document.getElementById('qs-soh').textContent}`,
+    `  Voltaje: ${document.getElementById('batt-v').textContent}`,
+    `  Temperatura: ${document.getElementById('batt-t').textContent}`,
+    '',
+    'SALUD DEL SISTEMA',
+    `  Salud General: ${health}`,
+    `  Eléctrico: ${document.getElementById('ph-elec').textContent}`,
+    `  Mecánico: ${document.getElementById('ph-mec').textContent}`,
+    `  Térmico: ${document.getElementById('ph-therm').textContent}`,
+    '',
+    'CONSUMO',
+    `  Consumo Medio: ${fuelAvg} L/100km`,
+    `  Ahorro Total: ${document.getElementById('sav-total').textContent}`,
+    `  CO2 Evitado: ${document.getElementById('co2-saved').textContent}`,
+    '',
+    `TOTAL VIAJES: ${state.trips.length}`,
+    `DISTANCIA TOTAL: ${state.trips.reduce((s,t)=>s+t.km,0).toFixed(1)} km`,
+    '',
+    'Generado por HybridCare Pro v4.0'
+  ].join('\n');
+  
+  const blob = new Blob([report], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `informe-hybridcare-${new Date().toISOString().split('T')[0]}.txt`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Informe exportado', 'success');
+}
+
+// ── PWA INSTALL ────────────────────────────────────────
+function setupPWAInstall() {
+  const banner = document.getElementById('install-banner');
+  const btn = document.getElementById('install-btn');
+  
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    state.installPrompt = e;
+    banner.classList.add('visible');
+  });
+  
+  btn.addEventListener('click', async () => {
+    if (!state.installPrompt) {
+      // iOS fallback
+      toast('En iOS: toca Compartir → "Añadir a pantalla de inicio"', 'info', 6000);
+      return;
+    }
+    state.installPrompt.prompt();
+    const { outcome } = await state.installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      banner.classList.remove('visible');
+      toast('¡HybridCare Pro instalada!', 'success');
+      if (navigator.vibrate) navigator.vibrate([100,50,200]);
+    }
+    state.installPrompt = null;
+  });
+
+  // iOS detection
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    banner.classList.add('visible');
+    banner.querySelector('p').innerHTML = '<strong>Instalar en iPhone/iPad</strong>Toca Compartir → "Añadir a pantalla de inicio"';
+  }
+
+  window.addEventListener('appinstalled', () => {
+    banner.classList.remove('visible');
+    toast('¡App instalada correctamente!', 'success');
+  });
+}
+
+// ── SERVICE WORKER REGISTRATION ────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// ── LOAD SAVED STATE ───────────────────────────────────
+document.getElementById('last-backup').textContent = localStorage.getItem('hcp_last_backup') || 'Nunca';
+
+// ── RESIZE HANDLER ─────────────────────────────────────
+window.addEventListener('resize', initChart);
+
+</script>
+</body>
+</html>
