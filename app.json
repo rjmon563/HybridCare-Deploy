@@ -1,0 +1,1 @@
+{\n  "expo": {\n    "name": "HybridCare",\n    "slug": "HybridCare",\n    "version": "1.0.0",\n    "platforms": [\n      "ios",\n      "android",\n      "web"\n    ]\n  }\n}
